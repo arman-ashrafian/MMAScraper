@@ -1,5 +1,6 @@
 import bs4 as bs
 import urllib.request
+from app import Thing
 
 url = "https://www.bestfightodds.com/"
 class URLopener(urllib.request.FancyURLopener):

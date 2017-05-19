@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
-import scrape
 import time
 import schedule
 from threading import Thread
@@ -13,17 +12,30 @@ db = SQLAlchemy(app)
 app.secret_key = 'supersecretkey'
 
 
-class Thing(db.Model):
+class Fight(db.Model):
     id = db.Column('id', db.Integer, primary_key=True, unique=True)
-    data = db.Column(db.String(1000), unique=True)
+    event = db.Column(db.String(1000))
+    date = db.Column(db.String(50))
+    fighterA = db.Column(db.String(100))
+    oddA = db.Column(db.Integer)
+    fighterB = db.Column(db.String(100))
+    oddB = db.Column(db.Integer)
+    fightNum = db.Column(db.Integer, unique=True)
 
     # Constructor
-    def __init__(self, data):
-        self.data = data
+    def __init__(self, event, date, fighterA, oddA, fighterB, oddB, num):
+        self.event = event
+        self.date = date
+        self.fighterA = fighterA
+        self.oddA = oddA
+        self.fighterB = fighterB
+        self.oddB = oddB
+        self.fightNum = num
 
     # print
     def __repr__(self):
-        return self.data
+        return self.event + " " + self.date
+import scraper
 
 @app.route("/")
 def index():
@@ -31,14 +43,14 @@ def index():
 
 
 def update_database():
-    eventTup = scrape.scrape()
-    print('\n\n' + eventTup[1]+ '\n\n')
-    event = Thing(eventTup[0])
-    try:
-        db.session.add(event)
-        db.session.commit()
-    except:
-        print("NOT UNIQUE")
+    fights = scraper.getFights()
+
+    for fight in fights:
+        try:
+            db.session.add(fight)
+            db.session.commit()
+        except:
+            print("NOT UNIQUE")
 
 def run_schedule():
     while True:
@@ -46,8 +58,9 @@ def run_schedule():
 
 
 if __name__ == '__main__':
-    schedule.every(10).seconds.do(update_database)
-    t = Thread(target=run_schedule)
-    t.start()
-    print("Starting")
+    # schedule.every(10).seconds.do(update_database)
+    # t = Thread(target=run_schedule)
+    # t.start()
+    # print("Starting Server")
+
     app.run(debug=False, use_reloader=False)
